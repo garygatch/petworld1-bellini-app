@@ -1,0 +1,1467 @@
+{
+  "name": "pet-detail",
+  "type": "page",
+  "url": "/pets/:id",
+  "params": {
+    "id": ""
+  },
+  "variables": [
+    {
+      "name": "petData",
+      "type": "service",
+      "id": "service"
+    },
+    {
+      "name": "$state",
+      "type": "service"
+    },
+    {
+      "name": "$q",
+      "type": "service"
+    },
+    {
+      "name": "loading",
+      "description": "Local request flag; only the current request token may clear it.",
+      "type": "property",
+      "value": "true"
+    },
+    {
+      "name": "error",
+      "description": "Safe service error message for non-404 failures, rendered as plain text.",
+      "type": "property",
+      "value": "null"
+    },
+    {
+      "name": "notFound",
+      "description": "True for invalid/missing IDs, absent records, or confirmed 404 responses.",
+      "type": "property",
+      "value": "false"
+    },
+    {
+      "name": "pet",
+      "description": "Read-only normalized detail; only id, name, category, status and tags are consumed.",
+      "type": "property",
+      "value": "null"
+    },
+    {
+      "name": "sequence",
+      "description": "Monotonic request token preventing stale result and finalizer writes.",
+      "type": "property",
+      "value": "0"
+    },
+    {
+      "name": "lastRouteId",
+      "description": "Last observed string ID; suppresses duplicate initial watch loads.",
+      "type": "property",
+      "value": "null"
+    },
+    {
+      "name": "canRetry",
+      "description": "Only valid integer-string route IDs can be retried or refreshed.",
+      "type": "property",
+      "value": "false"
+    },
+    {
+      "name": "notFoundMessage",
+      "description": "Distinct guidance for invalid links versus confirmed missing demo records.",
+      "type": "property",
+      "value": "''"
+    },
+    {
+      "name": "statusColor",
+      "description": "Semantic styling of reported API status; not an availability guarantee.",
+      "type": "property",
+      "value": "'default'"
+    },
+    {
+      "name": "routeId",
+      "description": "Reads the live UI-Router ID without numeric conversion. Bellini pageParameters provides the initial fallback.",
+      "type": "method",
+      "body": "const params = $ctrl.$state.params || {};\nconst raw = params.id !== undefined && params.id !== null ? params.id : ($ctrl.pageParameters && $ctrl.pageParameters.id);\nreturn raw === undefined || raw === null ? '' : String(raw);",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    },
+    {
+      "name": "syncRoute",
+      "description": "Loads direct links and changed route parameters, avoiding duplicate init/watch work.",
+      "type": "method",
+      "body": "const id = $ctrl.routeId();\nif ($ctrl.lastRouteId === id) { return; }\n$ctrl.lastRouteId = id;\nreturn $ctrl.loadPet(false);",
+      "invokeOnLoad": true,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": [
+        "$ctrl.$state.params.id",
+        "$ctrl.pageParameters.id"
+      ]
+    },
+    {
+      "name": "loadPet",
+      "description": "Loads only through petData. Every response, error and finalizer checks both sequence and current route. $q keeps updates digest-safe, including synchronous service exceptions.",
+      "type": "method",
+      "body": "const id = $ctrl.routeId();\nconst token = ++$ctrl.sequence;\n$ctrl.loading = true;\n$ctrl.error = null;\n$ctrl.notFound = false;\n$ctrl.pet = null;\n$ctrl.notFoundMessage = '';\n$ctrl.canRetry = /^-?\\d+$/.test(id) && id.length <= 100;\nif (!$ctrl.canRetry) {\n  $ctrl.loading = false;\n  $ctrl.notFound = true;\n  $ctrl.notFoundMessage = 'No matching pet: this link has a missing or invalid pet ID. Return to the Pet catalogue and choose a record.';\n  return;\n}\n// Capture the exact string ID; never use Number or parseInt for int64 routes.\nconst isCurrent = () => token === $ctrl.sequence && $ctrl.routeId() === id && $ctrl.$state.current.name === 'workspace.pet-detail';\nreturn $ctrl.$q.when().then(() => $ctrl.petData.getPet(id, !!force)).then(record => {\n  if (!isCurrent()) { return; }\n  if (!record) {\n    $ctrl.notFound = true;\n    $ctrl.notFoundMessage = 'No matching pet was returned for this ID. The public demo record may have changed or been removed. Retry or return to the Pet catalogue.';\n    return;\n  }\n  // Consume only the service contract's normalized fields; never mutate the service record.\n  $ctrl.pet = { id: record.id, name: record.name, category: record.category, status: record.status, tags: Array.isArray(record.tags) ? record.tags.slice() : [] };\n  const colors = { available: 'green', pending: 'yellow', sold: 'default' };\n  $ctrl.statusColor = colors[record.status] || 'default';\n}).catch(err => {\n  if (!isCurrent()) { return; }\n  if (err && (err.code === 'PET_NOT_FOUND' || err.status === 404)) {\n    $ctrl.notFound = true;\n    $ctrl.notFoundMessage = 'No matching pet (404). This ID was not found in the public Petstore demo. The record may have been removed or changed. Retry this ID or return to the Pet catalogue.';\n  } else {\n    $ctrl.error = (err && err.message) || 'We could not load this pet record. Please try again.';\n  }\n}).finally(() => {\n  if (isCurrent()) { $ctrl.loading = false; }\n});",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [
+        "force"
+      ],
+      "watch": []
+    },
+    {
+      "name": "refresh",
+      "description": "Force-refreshes the current valid route without clearing list caches.",
+      "type": "method",
+      "body": "if ($ctrl.loading || !$ctrl.canRetry) { return; }\nreturn $ctrl.loadPet(true);",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    }
+  ],
+  "children": [
+    {
+      "name": "section",
+      "nodeName": "section",
+      "elementId": "",
+      "attributes": [
+        {
+          "property": "aria-label",
+          "value": "Pet record details"
+        }
+      ],
+      "classList": [
+        "w-full",
+        "min-w-0",
+        "text-slate-900"
+      ],
+      "conditionalClasses": [],
+      "conditionalStyles": [],
+      "contentType": "text",
+      "displayExpression": "",
+      "events": {},
+      "iterate": {
+        "array": "",
+        "variable": "",
+        "trackByIndex": false
+      },
+      "styles": [],
+      "layout": {
+        "container": {
+          "type": "box",
+          "orientation": "column",
+          "mainAxisAlignment": "flex-start",
+          "crossAxisAlignment": "stretch",
+          "gap": "24px"
+        }
+      },
+      "children": [
+        {
+          "name": "Link",
+          "nodeName": "bln-link",
+          "elementId": "",
+          "attributes": [
+            {
+              "property": "core",
+              "value": ""
+            }
+          ],
+          "classList": [
+            "text-sm",
+            "font-medium",
+            "text-teal-800",
+            "[&_a]:underline",
+            "[&_a]:underline-offset-4",
+            "[&_a:focus-visible]:outline",
+            "[&_a:focus-visible]:outline-2",
+            "[&_a:focus-visible]:outline-offset-4",
+            "[&_a:focus-visible]:outline-teal-700"
+          ],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "crossAxisAlignment": "flex-start"
+            }
+          },
+          "children": [],
+          "comments": "Single inline breadcrumb/back link remains visible during loading, errors and 404s; not a duplicate navigation bar.",
+          "type": "core-component",
+          "expressions": [
+            {
+              "to": "text",
+              "expression": "'Pet catalogue'"
+            },
+            {
+              "to": "link",
+              "expression": "{type: 'state', state: 'workspace.pets', parameters: {}}"
+            },
+            {
+              "to": "openIn",
+              "expression": "'current_window'"
+            },
+            {
+              "to": "tooltip",
+              "expression": "'Return to the Pet catalogue'"
+            }
+          ]
+        },
+        {
+          "name": "div",
+          "nodeName": "div",
+          "elementId": "",
+          "attributes": [],
+          "classList": [],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            },
+            "container": {
+              "type": "box",
+              "orientation": "row",
+              "mainAxisAlignment": "space-between",
+              "crossAxisAlignment": "center",
+              "gap": "16px"
+            }
+          },
+          "children": [
+            {
+              "name": "h1",
+              "nodeName": "h1",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "text-2xl",
+                "sm:text-3xl",
+                "font-semibold",
+                "tracking-tight"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 1,
+                  "shrinkFactor": 1,
+                  "mainSize": "0"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "Pet details",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            },
+            {
+              "name": "Button",
+              "nodeName": "bln-button",
+              "elementId": "",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [
+                "rounded-md",
+                "focus-within:ring-2",
+                "focus-within:ring-teal-700",
+                "focus-within:ring-offset-2"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 0
+                }
+              },
+              "children": [],
+              "comments": "",
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "label",
+                  "expression": "'Refresh'"
+                },
+                {
+                  "to": "type",
+                  "expression": "'secondary'"
+                },
+                {
+                  "to": "tooltip",
+                  "expression": "'Reload this record from the public demo service'"
+                },
+                {
+                  "to": "isDisabled",
+                  "expression": "!$ctrl.canRetry"
+                },
+                {
+                  "to": "showLoading",
+                  "expression": "$ctrl.loading"
+                },
+                {
+                  "to": "onClick",
+                  "expression": "$ctrl.refresh()"
+                }
+              ]
+            }
+          ],
+          "comments": ""
+        },
+        {
+          "name": "pw-feedback",
+          "nodeName": "pw-feedback",
+          "elementId": "",
+          "attributes": [],
+          "classList": [],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "$ctrl.loading",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            }
+          },
+          "children": [],
+          "comments": "",
+          "type": "custom-component",
+          "ownerId": "6aebf3d8a81d56bf73bff9b6",
+          "ownerType": "app",
+          "expressions": [
+            {
+              "to": "kind",
+              "expression": "'loading'"
+            },
+            {
+              "to": "title",
+              "expression": "'Loading pet details'"
+            },
+            {
+              "to": "message",
+              "expression": "'Retrieving this record from the public Petstore demo.'"
+            }
+          ]
+        },
+        {
+          "name": "pw-feedback",
+          "nodeName": "pw-feedback",
+          "elementId": "",
+          "attributes": [],
+          "classList": [],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "!$ctrl.loading && $ctrl.error && !$ctrl.notFound",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            }
+          },
+          "children": [],
+          "comments": "",
+          "type": "custom-component",
+          "ownerId": "6aebf3d8a81d56bf73bff9b6",
+          "ownerType": "app",
+          "expressions": [
+            {
+              "to": "kind",
+              "expression": "'error'"
+            },
+            {
+              "to": "title",
+              "expression": "'Unable to load pet details'"
+            },
+            {
+              "to": "message",
+              "expression": "$ctrl.error"
+            },
+            {
+              "to": "retryLabel",
+              "expression": "'Retry'"
+            },
+            {
+              "to": "onRetry",
+              "expression": "$ctrl.refresh()"
+            }
+          ]
+        },
+        {
+          "name": "div",
+          "nodeName": "div",
+          "elementId": "",
+          "attributes": [],
+          "classList": [],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "!$ctrl.loading && $ctrl.notFound",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            },
+            "container": {
+              "type": "box",
+              "orientation": "column",
+              "mainAxisAlignment": "flex-start",
+              "crossAxisAlignment": "center",
+              "gap": "16px"
+            }
+          },
+          "children": [
+            {
+              "name": "pw-feedback",
+              "nodeName": "pw-feedback",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "w-full"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "layout": {
+                "cell": {
+                  "type": "box-item"
+                }
+              },
+              "children": [],
+              "comments": "",
+              "type": "custom-component",
+              "ownerId": "6aebf3d8a81d56bf73bff9b6",
+              "ownerType": "app",
+              "expressions": [
+                {
+                  "to": "kind",
+                  "expression": "'empty'"
+                },
+                {
+                  "to": "title",
+                  "expression": "'No matching pet'"
+                },
+                {
+                  "to": "message",
+                  "expression": "$ctrl.notFoundMessage"
+                }
+              ]
+            },
+            {
+              "name": "Button",
+              "nodeName": "bln-button",
+              "elementId": "",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [
+                "rounded-md",
+                "focus-within:ring-2",
+                "focus-within:ring-teal-700",
+                "focus-within:ring-offset-2"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "$ctrl.canRetry",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "layout": {
+                "cell": {
+                  "type": "box-item"
+                }
+              },
+              "children": [],
+              "comments": "",
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "label",
+                  "expression": "'Retry this ID'"
+                },
+                {
+                  "to": "type",
+                  "expression": "'secondary'"
+                },
+                {
+                  "to": "tooltip",
+                  "expression": "'Check whether this demo record is now present'"
+                },
+                {
+                  "to": "onClick",
+                  "expression": "$ctrl.refresh()"
+                }
+              ]
+            }
+          ],
+          "comments": "Empty/no-match presentation is deliberately distinct from a connection error. pw-feedback only offers retry in error mode, so the 404 retry is a separate verified core Button."
+        },
+        {
+          "name": "article",
+          "nodeName": "article",
+          "elementId": "",
+          "attributes": [],
+          "classList": [
+            "min-w-0",
+            "overflow-hidden",
+            "rounded-xl",
+            "border",
+            "border-slate-200",
+            "bg-white",
+            "shadow-sm"
+          ],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "!$ctrl.loading && !$ctrl.error && !$ctrl.notFound && $ctrl.pet",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            },
+            "container": {
+              "type": "grid",
+              "columns": [
+                {
+                  "type": "other",
+                  "value": "repeat(auto-fit, minmax(min(100%, 18rem), 1fr))"
+                }
+              ],
+              "rows": [
+                {
+                  "type": "other",
+                  "value": "auto"
+                }
+              ],
+              "columnGap": "0",
+              "rowGap": "0",
+              "columnAxisAlignment": "stretch",
+              "rowAxisAlignment": "stretch"
+            }
+          },
+          "children": [
+            {
+              "name": "div",
+              "nodeName": "div",
+              "elementId": "",
+              "attributes": [
+                {
+                  "property": "aria-hidden",
+                  "value": "true"
+                }
+              ],
+              "classList": [
+                "min-h-64",
+                "bg-teal-50",
+                "text-teal-700",
+                "p-10"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "layout": {
+                "cell": {
+                  "type": "grid-item"
+                },
+                "container": {
+                  "type": "box",
+                  "orientation": "column",
+                  "mainAxisAlignment": "center",
+                  "crossAxisAlignment": "center",
+                  "gap": "0"
+                }
+              },
+              "children": [
+                {
+                  "name": "Badge",
+                  "nodeName": "bln-badge",
+                  "elementId": "",
+                  "attributes": [
+                    {
+                      "property": "core",
+                      "value": ""
+                    }
+                  ],
+                  "classList": [
+                    "text-8xl",
+                    "[&_i]:text-8xl",
+                    "[&_svg]:text-8xl",
+                    "[&_i]:text-teal-700",
+                    "[&_svg]:text-teal-700"
+                  ],
+                  "conditionalClasses": [],
+                  "conditionalStyles": [],
+                  "contentType": "text",
+                  "displayExpression": "",
+                  "events": {},
+                  "iterate": {
+                    "array": "",
+                    "variable": "",
+                    "trackByIndex": false
+                  },
+                  "styles": [],
+                  "layout": {
+                    "cell": {
+                      "type": "box-item"
+                    }
+                  },
+                  "children": [],
+                  "comments": "",
+                  "type": "core-component",
+                  "expressions": [
+                    {
+                      "to": "text",
+                      "expression": "''"
+                    },
+                    {
+                      "to": "type",
+                      "expression": "'outline'"
+                    },
+                    {
+                      "to": "colorScheme",
+                      "expression": "'default'"
+                    },
+                    {
+                      "to": "icon",
+                      "expression": "{type: 'font-icon', style: 'solid', name: 'paw', position: 'left'}"
+                    }
+                  ]
+                }
+              ],
+              "comments": "Decorative paw through the verified core Badge icon renderer; no asset dependency."
+            },
+            {
+              "name": "div",
+              "nodeName": "div",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "min-w-0",
+                "p-6",
+                "sm:p-10"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "layout": {
+                "cell": {
+                  "type": "grid-item"
+                },
+                "container": {
+                  "type": "box",
+                  "orientation": "column",
+                  "mainAxisAlignment": "center",
+                  "crossAxisAlignment": "stretch",
+                  "gap": "20px"
+                }
+              },
+              "children": [
+                {
+                  "name": "Badge",
+                  "nodeName": "bln-badge",
+                  "elementId": "",
+                  "attributes": [
+                    {
+                      "property": "core",
+                      "value": ""
+                    }
+                  ],
+                  "classList": [],
+                  "conditionalClasses": [],
+                  "conditionalStyles": [],
+                  "contentType": "text",
+                  "displayExpression": "",
+                  "events": {},
+                  "iterate": {
+                    "array": "",
+                    "variable": "",
+                    "trackByIndex": false
+                  },
+                  "styles": [],
+                  "layout": {
+                    "cell": {
+                      "type": "box-item",
+                      "crossAxisAlignment": "flex-start"
+                    }
+                  },
+                  "children": [],
+                  "comments": "",
+                  "type": "core-component",
+                  "expressions": [
+                    {
+                      "to": "text",
+                      "expression": "$ctrl.pet.status"
+                    },
+                    {
+                      "to": "type",
+                      "expression": "'solid'"
+                    },
+                    {
+                      "to": "colorScheme",
+                      "expression": "$ctrl.statusColor"
+                    },
+                    {
+                      "to": "tooltip",
+                      "expression": "'Reported API status; not verified adoption availability'"
+                    }
+                  ]
+                },
+                {
+                  "name": "h2",
+                  "nodeName": "h2",
+                  "elementId": "",
+                  "attributes": [],
+                  "classList": [
+                    "m-0",
+                    "text-3xl",
+                    "sm:text-4xl",
+                    "font-semibold",
+                    "tracking-tight",
+                    "break-words",
+                    "[overflow-wrap:anywhere]"
+                  ],
+                  "conditionalClasses": [],
+                  "conditionalStyles": [],
+                  "contentType": "text",
+                  "displayExpression": "",
+                  "events": {},
+                  "iterate": {
+                    "array": "",
+                    "variable": "",
+                    "trackByIndex": false
+                  },
+                  "styles": [],
+                  "layout": {
+                    "cell": {
+                      "type": "box-item"
+                    }
+                  },
+                  "children": [
+                    {
+                      "name": "text",
+                      "nodeName": "text",
+                      "textContent": "$ctrl.pet.name",
+                      "evaluate": true
+                    }
+                  ],
+                  "comments": ""
+                },
+                {
+                  "name": "dl",
+                  "nodeName": "dl",
+                  "elementId": "",
+                  "attributes": [],
+                  "classList": [
+                    "m-0",
+                    "min-w-0"
+                  ],
+                  "conditionalClasses": [],
+                  "conditionalStyles": [],
+                  "contentType": "text",
+                  "displayExpression": "",
+                  "events": {},
+                  "iterate": {
+                    "array": "",
+                    "variable": "",
+                    "trackByIndex": false
+                  },
+                  "styles": [],
+                  "layout": {
+                    "cell": {
+                      "type": "box-item"
+                    }
+                  },
+                  "children": [
+                    {
+                      "name": "dt",
+                      "nodeName": "dt",
+                      "elementId": "",
+                      "attributes": [],
+                      "classList": [
+                        "text-xs",
+                        "font-medium",
+                        "uppercase",
+                        "tracking-wider",
+                        "text-slate-500"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "",
+                      "events": {},
+                      "iterate": {
+                        "array": "",
+                        "variable": "",
+                        "trackByIndex": false
+                      },
+                      "styles": [],
+                      "children": [
+                        {
+                          "name": "text",
+                          "nodeName": "text",
+                          "textContent": "Category",
+                          "evaluate": false
+                        }
+                      ],
+                      "comments": ""
+                    },
+                    {
+                      "name": "dd",
+                      "nodeName": "dd",
+                      "elementId": "",
+                      "attributes": [],
+                      "classList": [
+                        "m-0",
+                        "mt-2",
+                        "text-lg",
+                        "text-slate-700",
+                        "break-words",
+                        "[overflow-wrap:anywhere]"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "",
+                      "events": {},
+                      "iterate": {
+                        "array": "",
+                        "variable": "",
+                        "trackByIndex": false
+                      },
+                      "styles": [],
+                      "children": [
+                        {
+                          "name": "text",
+                          "nodeName": "text",
+                          "textContent": "$ctrl.pet.category",
+                          "evaluate": true
+                        }
+                      ],
+                      "comments": ""
+                    },
+                    {
+                      "name": "dt",
+                      "nodeName": "dt",
+                      "elementId": "",
+                      "attributes": [],
+                      "classList": [
+                        "mt-6",
+                        "text-xs",
+                        "font-medium",
+                        "uppercase",
+                        "tracking-wider",
+                        "text-slate-500"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "",
+                      "events": {},
+                      "iterate": {
+                        "array": "",
+                        "variable": "",
+                        "trackByIndex": false
+                      },
+                      "styles": [],
+                      "children": [
+                        {
+                          "name": "text",
+                          "nodeName": "text",
+                          "textContent": "Record ID",
+                          "evaluate": false
+                        }
+                      ],
+                      "comments": ""
+                    },
+                    {
+                      "name": "dd",
+                      "nodeName": "dd",
+                      "elementId": "",
+                      "attributes": [],
+                      "classList": [
+                        "m-0",
+                        "mt-2",
+                        "font-mono",
+                        "text-sm",
+                        "text-slate-700",
+                        "break-all"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "",
+                      "events": {},
+                      "iterate": {
+                        "array": "",
+                        "variable": "",
+                        "trackByIndex": false
+                      },
+                      "styles": [],
+                      "children": [
+                        {
+                          "name": "text",
+                          "nodeName": "text",
+                          "textContent": "$ctrl.pet.id",
+                          "evaluate": true
+                        }
+                      ],
+                      "comments": ""
+                    }
+                  ],
+                  "comments": ""
+                },
+                {
+                  "name": "section",
+                  "nodeName": "section",
+                  "elementId": "",
+                  "attributes": [
+                    {
+                      "property": "aria-label",
+                      "value": "Record tags"
+                    }
+                  ],
+                  "classList": [
+                    "pt-5",
+                    "border-t",
+                    "border-slate-100"
+                  ],
+                  "conditionalClasses": [],
+                  "conditionalStyles": [],
+                  "contentType": "text",
+                  "displayExpression": "",
+                  "events": {},
+                  "iterate": {
+                    "array": "",
+                    "variable": "",
+                    "trackByIndex": false
+                  },
+                  "styles": [],
+                  "layout": {
+                    "cell": {
+                      "type": "box-item"
+                    },
+                    "container": {
+                      "type": "box",
+                      "orientation": "column",
+                      "mainAxisAlignment": "flex-start",
+                      "crossAxisAlignment": "flex-start",
+                      "gap": "8px"
+                    }
+                  },
+                  "children": [
+                    {
+                      "name": "h3",
+                      "nodeName": "h3",
+                      "elementId": "",
+                      "attributes": [],
+                      "classList": [
+                        "m-0",
+                        "text-sm",
+                        "font-medium",
+                        "text-slate-700"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "",
+                      "events": {},
+                      "iterate": {
+                        "array": "",
+                        "variable": "",
+                        "trackByIndex": false
+                      },
+                      "styles": [],
+                      "layout": {
+                        "cell": {
+                          "type": "box-item"
+                        }
+                      },
+                      "children": [
+                        {
+                          "name": "text",
+                          "nodeName": "text",
+                          "textContent": "Tags",
+                          "evaluate": false
+                        }
+                      ],
+                      "comments": ""
+                    },
+                    {
+                      "name": "Badge",
+                      "nodeName": "bln-badge",
+                      "elementId": "",
+                      "attributes": [
+                        {
+                          "property": "core",
+                          "value": ""
+                        }
+                      ],
+                      "classList": [
+                        "max-w-full",
+                        "whitespace-normal",
+                        "break-words",
+                        "[overflow-wrap:anywhere]"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "",
+                      "events": {},
+                      "iterate": {
+                        "array": "$ctrl.pet.tags",
+                        "variable": "tag",
+                        "trackByIndex": true
+                      },
+                      "styles": [],
+                      "layout": {
+                        "cell": {
+                          "type": "box-item"
+                        }
+                      },
+                      "children": [],
+                      "comments": "",
+                      "type": "core-component",
+                      "expressions": [
+                        {
+                          "to": "text",
+                          "expression": "tag"
+                        },
+                        {
+                          "to": "type",
+                          "expression": "'outline'"
+                        },
+                        {
+                          "to": "colorScheme",
+                          "expression": "'default'"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "p",
+                      "nodeName": "p",
+                      "elementId": "",
+                      "attributes": [],
+                      "classList": [
+                        "m-0",
+                        "text-sm",
+                        "text-slate-500"
+                      ],
+                      "conditionalClasses": [],
+                      "conditionalStyles": [],
+                      "contentType": "text",
+                      "displayExpression": "!$ctrl.pet.tags.length",
+                      "events": {},
+                      "iterate": {
+                        "array": "",
+                        "variable": "",
+                        "trackByIndex": false
+                      },
+                      "styles": [],
+                      "layout": {
+                        "cell": {
+                          "type": "box-item"
+                        }
+                      },
+                      "children": [
+                        {
+                          "name": "text",
+                          "nodeName": "text",
+                          "textContent": "No tags supplied for this record.",
+                          "evaluate": false
+                        }
+                      ],
+                      "comments": ""
+                    }
+                  ],
+                  "comments": ""
+                }
+              ],
+              "comments": ""
+            }
+          ],
+          "comments": "Auto-fitting built-in Grid gives a spacious two-column icon/content card, stacking naturally when either column would be narrower than 18rem. No remote image or inferred pet attributes."
+        },
+        {
+          "name": "aside",
+          "nodeName": "aside",
+          "elementId": "",
+          "attributes": [],
+          "classList": [
+            "rounded-xl",
+            "border",
+            "border-slate-200",
+            "bg-white",
+            "p-6",
+            "sm:p-8"
+          ],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            }
+          },
+          "children": [
+            {
+              "name": "h2",
+              "nodeName": "h2",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "text-lg",
+                "font-semibold",
+                "tracking-tight"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "About this record",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            },
+            {
+              "name": "p",
+              "nodeName": "p",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "mt-3",
+                "max-w-prose",
+                "text-sm",
+                "leading-7",
+                "text-slate-600"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "This record comes from Swagger Petstore, a public demo used to explore API data. Shared sample records can change or disappear. The status is a value reported by the demo, not confirmation of adoption availability.",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            },
+            {
+              "name": "p",
+              "nodeName": "p",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "mt-3",
+                "max-w-prose",
+                "text-sm",
+                "leading-7",
+                "text-slate-600"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "Only the record name, category, ID, status and supplied tags are shown. Price, age, breed, location and real-world availability are not verified or inferred here.",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            }
+          ],
+          "comments": "Record context remains visible in all states; never claims real-world availability or invents missing fields."
+        },
+        {
+          "name": "section",
+          "nodeName": "section",
+          "elementId": "",
+          "attributes": [],
+          "classList": [
+            "rounded-lg",
+            "border",
+            "border-slate-200",
+            "bg-slate-50",
+            "p-5"
+          ],
+          "conditionalClasses": [],
+          "conditionalStyles": [],
+          "contentType": "text",
+          "displayExpression": "",
+          "events": {},
+          "iterate": {
+            "array": "",
+            "variable": "",
+            "trackByIndex": false
+          },
+          "styles": [],
+          "layout": {
+            "cell": {
+              "type": "box-item"
+            }
+          },
+          "children": [
+            {
+              "name": "h2",
+              "nodeName": "h2",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "text-sm",
+                "font-medium",
+                "text-slate-800"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "Record source",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            },
+            {
+              "name": "p",
+              "nodeName": "p",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "mt-2",
+                "text-sm",
+                "leading-6",
+                "text-slate-600"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "API provider: Swagger Petstore v2 · Public demo",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            },
+            {
+              "name": "p",
+              "nodeName": "p",
+              "elementId": "",
+              "attributes": [],
+              "classList": [
+                "m-0",
+                "mt-1",
+                "text-xs",
+                "leading-5",
+                "text-slate-500"
+              ],
+              "conditionalClasses": [],
+              "conditionalStyles": [],
+              "contentType": "text",
+              "displayExpression": "",
+              "events": {},
+              "iterate": {
+                "array": "",
+                "variable": "",
+                "trackByIndex": false
+              },
+              "styles": [],
+              "children": [
+                {
+                  "name": "text",
+                  "nodeName": "text",
+                  "textContent": "Read-only data. Refresh retrieves the current demo record; this page does not create or modify pets.",
+                  "evaluate": false
+                }
+              ],
+              "comments": ""
+            }
+          ],
+          "comments": ""
+        }
+      ],
+      "comments": ""
+    }
+  ],
+  "parentPageName": "workspace"
+}

@@ -1,0 +1,436 @@
+{
+  "type": "custom-component",
+  "name": "pw-country-card",
+  "description": "## Country card\nReusable slate/teal summary card for a caller-supplied normalized country. Uses Bellini box layouts, text nodes, badges, and a core button with an arrow icon. The optional flag is rendered as text only; no assets, API calls, or navigation are used.\n\n### Contract\n`country`: `{ code: string, name: string, native: string, emoji: string, capital: string, currency: string, phone: string, continentName: string, languages: string[] }`. Supply normalized values; the card does not invent or fetch country data and never mutates the object. Missing capital/currency display an em dash; missing flag, ISO, or continent are omitted.\n\n`onSelect({ country })` emits the supplied country through the `country` callback local when the details button is activated. The core button provides native keyboard activation; its surrounding focus-within ring makes keyboard focus visible. The card itself is not an interactive navigation target.",
+  "children": [
+    {
+      "name": "article",
+      "classList": [
+        "w-full",
+        "min-w-0",
+        "rounded-xl",
+        "border",
+        "border-slate-200",
+        "bg-white",
+        "p-5",
+        "text-slate-900",
+        "shadow-sm"
+      ],
+      "displayExpression": "$ctrl.country",
+      "layout": {
+        "container": {
+          "type": "box",
+          "orientation": "column",
+          "mainAxisAlignment": "flex-start",
+          "crossAxisAlignment": "stretch",
+          "gap": "1rem"
+        }
+      },
+      "children": [
+        {
+          "name": "div",
+          "classList": [],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 0,
+              "shrinkFactor": 1,
+              "mainSize": "auto"
+            },
+            "container": {
+              "type": "box",
+              "orientation": "row",
+              "mainAxisAlignment": "flex-start",
+              "crossAxisAlignment": "center",
+              "gap": "0.75rem"
+            }
+          },
+          "children": [
+            {
+              "name": "span",
+              "attributes": [
+                {
+                  "property": "aria-hidden",
+                  "value": "true"
+                }
+              ],
+              "classList": [
+                "text-3xl",
+                "leading-none"
+              ],
+              "displayExpression": "$ctrl.country.emoji",
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 0,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "$ctrl.country.emoji",
+                  "evaluate": true
+                }
+              ],
+              "comments": "Decorative textual flag only, omitted when absent. Country name provides the accessible identity."
+            },
+            {
+              "name": "h3",
+              "classList": [
+                "m-0",
+                "min-w-0",
+                "break-words",
+                "text-lg",
+                "font-semibold",
+                "leading-snug"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 1,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "$ctrl.country.name",
+                  "evaluate": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "div",
+          "classList": [],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 0,
+              "shrinkFactor": 1,
+              "mainSize": "auto"
+            },
+            "container": {
+              "type": "box",
+              "orientation": "column",
+              "mainAxisAlignment": "flex-start",
+              "crossAxisAlignment": "flex-start",
+              "gap": "0.5rem"
+            }
+          },
+          "children": [
+            {
+              "name": "Badge",
+              "nodeName": "bln-badge",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [],
+              "displayExpression": "$ctrl.country.code",
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [],
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "text",
+                  "expression": "$ctrl.country.code"
+                },
+                {
+                  "to": "type",
+                  "expression": "'outline'"
+                },
+                {
+                  "to": "colorScheme",
+                  "expression": "'default'"
+                },
+                {
+                  "to": "tooltip",
+                  "expression": "'ISO country code'"
+                }
+              ]
+            },
+            {
+              "name": "Badge",
+              "nodeName": "bln-badge",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [
+                "max-w-full",
+                "break-words"
+              ],
+              "displayExpression": "$ctrl.country.continentName",
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [],
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "text",
+                  "expression": "$ctrl.country.continentName"
+                },
+                {
+                  "to": "type",
+                  "expression": "'outline'"
+                },
+                {
+                  "to": "colorScheme",
+                  "expression": "'green'"
+                }
+              ]
+            }
+          ],
+          "comments": "Vertical badge layout remains usable even with long continent names and narrow parent containers."
+        },
+        {
+          "name": "dl",
+          "classList": [
+            "m-0",
+            "rounded-lg",
+            "bg-slate-50",
+            "p-3"
+          ],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 1,
+              "shrinkFactor": 1,
+              "mainSize": "auto"
+            },
+            "container": {
+              "type": "box",
+              "orientation": "column",
+              "mainAxisAlignment": "flex-start",
+              "crossAxisAlignment": "stretch",
+              "gap": "0.25rem"
+            }
+          },
+          "children": [
+            {
+              "name": "dt",
+              "classList": [
+                "text-xs",
+                "font-medium",
+                "text-slate-500"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "Capital",
+                  "evaluate": false
+                }
+              ]
+            },
+            {
+              "name": "dd",
+              "classList": [
+                "m-0",
+                "mb-2",
+                "break-words",
+                "text-sm",
+                "text-slate-800"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "$ctrl.country.capital || '—'",
+                  "evaluate": true
+                }
+              ]
+            },
+            {
+              "name": "dt",
+              "classList": [
+                "text-xs",
+                "font-medium",
+                "text-slate-500"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "Currency",
+                  "evaluate": false
+                }
+              ]
+            },
+            {
+              "name": "dd",
+              "classList": [
+                "m-0",
+                "break-words",
+                "text-sm",
+                "text-slate-800"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "$ctrl.country.currency || '—'",
+                  "evaluate": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "div",
+          "classList": [
+            "rounded-md",
+            "text-sm",
+            "text-teal-700",
+            "focus-within:ring-2",
+            "focus-within:ring-teal-600",
+            "focus-within:ring-offset-2"
+          ],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 0,
+              "shrinkFactor": 1,
+              "mainSize": "auto",
+              "crossAxisAlignment": "flex-start"
+            }
+          },
+          "children": [
+            {
+              "name": "Button",
+              "nodeName": "bln-button",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [],
+              "children": [],
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "label",
+                  "expression": "'Country details'"
+                },
+                {
+                  "to": "type",
+                  "expression": "'secondary'"
+                },
+                {
+                  "to": "icon",
+                  "expression": "{type: 'font-icon', style: 'solid', name: 'arrow-right', position: 'right'}"
+                },
+                {
+                  "to": "tooltip",
+                  "expression": "'Country details' + ($ctrl.country.name ? ': ' + $ctrl.country.name : '')"
+                },
+                {
+                  "to": "onClick",
+                  "expression": "$ctrl.selectCountry()"
+                }
+              ]
+            }
+          ],
+          "comments": "The core button is the only tab stop. This wrapper highlights focus on its internal native button, without adding a duplicate keyboard handler or tab stop."
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "selectCountry",
+      "description": "Emits the supplied country without mutation or navigation.",
+      "type": "method",
+      "body": "if ($ctrl.country && $ctrl.onSelect) {\n  $ctrl.onSelect({ country: $ctrl.country });\n}",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    }
+  ],
+  "bindings": [
+    {
+      "name": "country",
+      "type": "<",
+      "default": "null",
+      "description": "Normalized read-only country: code, name, native, emoji, capital, currency, phone, and continentName are strings; languages is string[]. No data is fetched or synthesized. A null input hides the card.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "object"
+    },
+    {
+      "name": "onSelect",
+      "type": "<",
+      "default": "",
+      "description": "Called on details-button activation with the named local country containing the original input object. Does not navigate.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "function",
+      "parameters": [
+        "country"
+      ]
+    }
+  ],
+  "modules": [],
+  "styles": []
+}

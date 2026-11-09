@@ -1,0 +1,458 @@
+{
+  "type": "custom-component",
+  "name": "pw-feedback",
+  "description": "## Feedback panel\nReusable, nonmodal feedback for `loading`, `error`, and `empty` states. Uses verified Bellini box layouts, text nodes, Badge icons, Progress, and Button. Slate surfaces and teal details keep the panel calm; errors use a restrained red outline badge.\n\n### Public interface\n`kind` is a string (`loading`, `error`, or `empty`); unrecognized values use empty guidance. `title` and `message` are plain, escaped text with state-specific fallbacks. `retryLabel` defaults to Retry. Supply `onRetry` only when retry is available; it is invoked without arguments and only from the error state. The parent owns retry/loading transitions.\n\n### Accessibility\nA polite, atomic status region announces feedback without moving focus. Decorative icons and progress are hidden from assistive technology. The animated core progress is removed from display under prefers-reduced-motion and replaced with a static core icon badge using Tailwind motion variants. No assets, API calls, timers, or modal behavior.",
+  "children": [
+    {
+      "name": "section",
+      "classList": [
+        "w-full",
+        "rounded-xl",
+        "border",
+        "border-slate-200",
+        "bg-white",
+        "p-6",
+        "sm:p-8",
+        "text-center",
+        "text-slate-800",
+        "shadow-sm"
+      ],
+      "layout": {
+        "container": {
+          "type": "box",
+          "orientation": "column",
+          "mainAxisAlignment": "center",
+          "crossAxisAlignment": "center",
+          "gap": "1rem"
+        }
+      },
+      "children": [
+        {
+          "name": "div",
+          "attributes": [
+            {
+              "property": "aria-hidden",
+              "value": "true"
+            }
+          ],
+          "classList": [
+            "text-teal-700"
+          ],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 0,
+              "shrinkFactor": 0,
+              "mainSize": "auto"
+            }
+          },
+          "children": [
+            {
+              "name": "div",
+              "classList": [
+                "motion-reduce:hidden"
+              ],
+              "displayExpression": "$ctrl.kind === 'loading'",
+              "children": [
+                {
+                  "name": "Progress",
+                  "nodeName": "bln-progress",
+                  "attributes": [
+                    {
+                      "property": "core",
+                      "value": ""
+                    }
+                  ],
+                  "classList": [],
+                  "children": [],
+                  "type": "core-component",
+                  "expressions": [
+                    {
+                      "to": "type",
+                      "expression": "'infinite'"
+                    },
+                    {
+                      "to": "shape",
+                      "expression": "'circular'"
+                    }
+                  ]
+                }
+              ],
+              "comments": "Hide the entire animated core widget for reduced motion, including its internal animation; the static badge below replaces it."
+            },
+            {
+              "name": "div",
+              "classList": [
+                "hidden",
+                "motion-reduce:block"
+              ],
+              "displayExpression": "$ctrl.kind === 'loading'",
+              "children": [
+                {
+                  "name": "Badge",
+                  "nodeName": "bln-badge",
+                  "attributes": [
+                    {
+                      "property": "core",
+                      "value": ""
+                    }
+                  ],
+                  "classList": [],
+                  "children": [],
+                  "type": "core-component",
+                  "expressions": [
+                    {
+                      "to": "text",
+                      "expression": "'Loading'"
+                    },
+                    {
+                      "to": "type",
+                      "expression": "'outline'"
+                    },
+                    {
+                      "to": "colorScheme",
+                      "expression": "'default'"
+                    },
+                    {
+                      "to": "icon",
+                      "expression": "({type: 'font-icon', style: 'solid', name: 'sync-alt', position: 'left'})"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Badge",
+              "nodeName": "bln-badge",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [],
+              "displayExpression": "$ctrl.kind === 'error'",
+              "children": [],
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "text",
+                  "expression": "'Error'"
+                },
+                {
+                  "to": "type",
+                  "expression": "'outline'"
+                },
+                {
+                  "to": "colorScheme",
+                  "expression": "'red'"
+                },
+                {
+                  "to": "icon",
+                  "expression": "({type: 'font-icon', style: 'solid', name: 'exclamation-circle', position: 'left'})"
+                }
+              ]
+            },
+            {
+              "name": "Badge",
+              "nodeName": "bln-badge",
+              "attributes": [
+                {
+                  "property": "core",
+                  "value": ""
+                }
+              ],
+              "classList": [],
+              "displayExpression": "$ctrl.kind !== 'loading' && $ctrl.kind !== 'error'",
+              "children": [],
+              "type": "core-component",
+              "expressions": [
+                {
+                  "to": "text",
+                  "expression": "'No results'"
+                },
+                {
+                  "to": "type",
+                  "expression": "'outline'"
+                },
+                {
+                  "to": "colorScheme",
+                  "expression": "'default'"
+                },
+                {
+                  "to": "icon",
+                  "expression": "({type: 'font-icon', style: 'solid', name: 'inbox', position: 'left'})"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "div",
+          "attributes": [
+            {
+              "property": "role",
+              "value": "status"
+            },
+            {
+              "property": "aria-live",
+              "value": "polite"
+            },
+            {
+              "property": "aria-atomic",
+              "value": "true"
+            }
+          ],
+          "classList": [
+            "w-full",
+            "min-w-0"
+          ],
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 0,
+              "shrinkFactor": 1,
+              "mainSize": "auto"
+            },
+            "container": {
+              "type": "box",
+              "orientation": "column",
+              "mainAxisAlignment": "center",
+              "crossAxisAlignment": "center",
+              "gap": "0.5rem"
+            }
+          },
+          "children": [
+            {
+              "name": "h2",
+              "classList": [
+                "m-0",
+                "text-lg",
+                "font-semibold",
+                "text-slate-900",
+                "break-words",
+                "max-w-full"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "$ctrl.getTitle()",
+                  "evaluate": true
+                }
+              ]
+            },
+            {
+              "name": "p",
+              "classList": [
+                "m-0",
+                "max-w-prose",
+                "text-sm",
+                "leading-6",
+                "text-slate-600",
+                "break-words"
+              ],
+              "layout": {
+                "cell": {
+                  "type": "box-item",
+                  "growFactor": 0,
+                  "shrinkFactor": 1,
+                  "mainSize": "auto"
+                }
+              },
+              "children": [
+                {
+                  "name": "text",
+                  "textContent": "$ctrl.getMessage()",
+                  "evaluate": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Button",
+          "nodeName": "bln-button",
+          "attributes": [
+            {
+              "property": "core",
+              "value": ""
+            }
+          ],
+          "classList": [
+            "text-teal-700",
+            "rounded-md",
+            "focus-within:ring-2",
+            "focus-within:ring-teal-600",
+            "focus-within:ring-offset-2"
+          ],
+          "displayExpression": "$ctrl.canRetry()",
+          "layout": {
+            "cell": {
+              "type": "box-item",
+              "growFactor": 0,
+              "shrinkFactor": 0,
+              "mainSize": "auto"
+            }
+          },
+          "children": [],
+          "comments": "Core keyboard-accessible action is only mounted when the parent supplies an error retry callback.",
+          "type": "core-component",
+          "expressions": [
+            {
+              "to": "label",
+              "expression": "$ctrl.retryLabel || 'Retry'"
+            },
+            {
+              "to": "type",
+              "expression": "'default'"
+            },
+            {
+              "to": "icon",
+              "expression": "({type: 'font-icon', style: 'solid', name: 'sync-alt', position: 'left'})"
+            },
+            {
+              "to": "onClick",
+              "expression": "$ctrl.retry()"
+            }
+          ]
+        }
+      ],
+      "comments": "Regular inline panel, not a dialog. Live text is separate from the interactive action so status updates do not announce the retry control."
+    }
+  ],
+  "variables": [
+    {
+      "name": "getTitle",
+      "description": "Provides meaningful heading text even when the parent supplies none.",
+      "type": "method",
+      "body": "return $ctrl.title || ($ctrl.kind === 'loading' ? 'Loading' : $ctrl.kind === 'error' ? 'Something went wrong' : 'Nothing here yet');",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    },
+    {
+      "name": "getMessage",
+      "description": "Provides concise loading feedback, error explanation, or empty-state guidance.",
+      "type": "method",
+      "body": "return $ctrl.message || ($ctrl.kind === 'loading' ? 'Please wait while we get things ready.' : $ctrl.kind === 'error' ? 'We could not complete that request. Please try again when you are ready.' : 'There is nothing to show right now. Try adjusting your filters or check back later.');",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    },
+    {
+      "name": "canRetry",
+      "description": "Only exposes retry when the state is error and an optional handler exists.",
+      "type": "method",
+      "body": "return $ctrl.kind === 'error' && typeof $ctrl.onRetry === 'function';",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    },
+    {
+      "name": "retry",
+      "description": "Guards the optional callback; the parent controls any subsequent loading state.",
+      "type": "method",
+      "body": "if ($ctrl.canRetry()) {\n  return $ctrl.onRetry();\n}",
+      "invokeOnLoad": false,
+      "isAsync": false,
+      "returnType": {
+        "name": "any"
+      },
+      "parameters": [],
+      "watch": []
+    }
+  ],
+  "bindings": [
+    {
+      "name": "kind",
+      "type": "<",
+      "default": "'empty'",
+      "description": "State string: loading, error, or empty. Unknown values fall back to empty.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "text",
+      "autocomplete": [],
+      "includeAssets": false
+    },
+    {
+      "name": "title",
+      "type": "<",
+      "default": "''",
+      "description": "Accessible plain-text heading; blank values use a state-specific heading.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "text",
+      "autocomplete": [],
+      "includeAssets": false
+    },
+    {
+      "name": "message",
+      "type": "<",
+      "default": "''",
+      "description": "Plain-text explanation or guidance; blank values use calm state-specific copy.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "text",
+      "autocomplete": [],
+      "includeAssets": false
+    },
+    {
+      "name": "retryLabel",
+      "type": "<",
+      "default": "'Retry'",
+      "description": "Retry button label. Blank labels also fall back to Retry.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "text",
+      "autocomplete": [],
+      "includeAssets": false
+    },
+    {
+      "name": "onRetry",
+      "type": "<",
+      "default": "",
+      "description": "Optional retry action. Omit to hide the action entirely. Called without arguments only in error state.",
+      "visibleWhen": "",
+      "label": "",
+      "group": "",
+      "example": "",
+      "actions": [],
+      "propertyType": "function",
+      "parameters": []
+    }
+  ],
+  "modules": [],
+  "styles": []
+}
